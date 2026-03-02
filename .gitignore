@@ -43,6 +43,8 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+/android/local.properties
+
 # Python related
 __pycache__/
 *.egg-info/
@@ -59,6 +61,7 @@ env/
 .env
 .env.local
 .env.*.local
+.env.production
 
 # User data (sensitive email data)
 qmail_users/
@@ -70,3 +73,25 @@ qmail_users/
 
 # OS files
 Thumbs.db
+
+# Build artifacts & zips
+build_log.txt
+*.zip
+
+# SSL certificates (NEVER commit these)
+nginx/ssl/*.pem
+nginx/ssl/*.key
+nginx/ssl/*.crt
+
+# Flutter generated
+.metadata
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# Nginx logs
+nginx/
+
+# Test & scripts folders
+test/
+tests/
+scripts/
