@@ -1,0 +1,108 @@
+# =============================================================================
+# Qmail API - Kubernetes Deployment
+# =============================================================================
+# Deploys the Qmail FastAPI backend with:
+#   - 3 replicas for high availability
+#   - Resource limits for cost control
+#   - Health checks for auto-recovery
+#   - Security context (non-root, read-only FS)
+# =============================================================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qmail-api
+  namespace: qmail
+  labels:
+    app: qmail-api
+    tier: backend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: qmail-api
+  strategy:
+    type: RollingUpdate # Zero-downtime deploys (PostgreSQL handles persistence, no local PVCs)
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: qmail-api
+        tier: backend
+    spec:
+      serviceAccountName: qmail-api
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+        - name: qmail-api
+          image: gcr.io/qumail-4f62a/qmail-backend:latest # Qmail backend image
+          ports:
+            - containerPort: 8000
+              protocol: TCP
+          envFrom:
+            - secretRef:
+                name: qmail-secrets
+            - configMapRef:
+                name: qmail-config
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "1000m"
+              memory: "512Mi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          # No volume mounts needed — PostgreSQL is the production database.
+          # Legacy SQLite mounts removed; all data lives in the postgres service.
+      # volumes: none required (PostgreSQL handles persistence)
+
+---
+# =============================================================================
+# Service - Expose Qmail API within the cluster
+# =============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: qmail-api
+  namespace: qmail
+  labels:
+    app: qmail-api
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 8000
+      protocol: TCP
+      name: http
+  selector:
+    app: qmail-api
+
+---
+# =============================================================================
+# ServiceAccount
+# =============================================================================
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: qmail-api
+  namespace: qmail

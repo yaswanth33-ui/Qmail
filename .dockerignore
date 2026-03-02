@@ -1,0 +1,76 @@
+# =============================================================================
+# Docker Ignore - Exclude unnecessary files from Docker build context
+# =============================================================================
+
+# Git
+.git/
+.gitignore
+
+# Flutter / Dart frontend (not needed in backend container)
+lib/
+android/
+ios/
+windows/
+linux/
+macos/
+web/
+test/
+build/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+pubspec.yaml
+pubspec.lock
+analysis_options.yaml
+
+# Python caches
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+.pytest_cache/
+.mypy_cache/
+.tox/
+.coverage
+htmlcov/
+
+# Environment files (secrets - NEVER include in image)
+.env
+.env.local
+.env.*.local
+.env.production
+
+# User data (sensitive - never bake into image)
+qmail_users/
+qmail_broker/
+
+# IDE / editor
+.vscode/
+.idea/
+*.code-workspace
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Documentation
+README.md
+LICENSE
+docs/
+
+# Docker files (avoid recursive build context)
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Tests (not needed in production image)
+tests/
+scripts/
+
+# Misc
+*.log
+*.md

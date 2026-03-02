@@ -1,0 +1,108 @@
+# =============================================================================
+# Qmail - PostgreSQL Deployment for Production
+# =============================================================================
+# Primary database for all Qmail data (users, emails, broker, keys).
+# Uses schema-based isolation for per-user data separation.
+# =============================================================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: qmail
+  labels:
+    app: postgres
+    tier: database
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  strategy:
+    type: Recreate # Required for ReadWriteOnce PVC
+  template:
+    metadata:
+      labels:
+        app: postgres
+        tier: database
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          env:
+            - name: POSTGRES_DB
+              value: "qmail"
+            - name: POSTGRES_USER
+              value: "qmail"
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: qmail-secrets
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_INITDB_ARGS
+              value: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+            # Performance tuning via environment
+            - name: POSTGRES_HOST_AUTH_METHOD
+              value: "scram-sha-256"
+          ports:
+            - containerPort: 5432
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1Gi"
+          livenessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - qmail
+                - -d
+                - qmail
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - qmail
+                - -d
+                - qmail
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+              subPath: pgdata # Avoid lost+found conflicts
+      volumes:
+        - name: postgres-data
+          persistentVolumeClaim:
+            claimName: qmail-postgres-pvc
+
+---
+# =============================================================================
+# Service - Expose PostgreSQL within the cluster
+# =============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: qmail
+  labels:
+    app: postgres
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5432
+      targetPort: 5432
+      protocol: TCP
+      name: postgresql
+  selector:
+    app: postgres

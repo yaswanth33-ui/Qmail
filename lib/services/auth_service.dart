@@ -1,16 +1,14 @@
 /// Authentication service for OAuth2 login and user management.
 
-import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../models/auth_models.dart';
+import 'api_config.dart';
 
 class AuthService {
-  final String baseUrl;
-
-  AuthService({this.baseUrl = 'http://localhost:5000'});
+  AuthService();
 
   /// Build OAuth authorization URL
   Future<String> buildAuthorizationUrl({
@@ -18,7 +16,7 @@ class AuthService {
     required String redirectUri,
     String? state,
   }) async {
-    final uri = Uri.parse('$baseUrl/auth/oauth/authorize')
+    final uri = Uri.parse(ApiConfig.authAuthorize)
         .replace(queryParameters: {
       'provider': providerId,
       'redirect_uri': redirectUri,
@@ -40,7 +38,6 @@ class AuthService {
         return true;
       }
     } catch (e) {
-      print('Failed to launch OAuth URL: $e');
     }
     return false;
   }
@@ -52,14 +49,14 @@ class AuthService {
     required String redirectUri,
   }) async {
     final response = await http.post(
-      Uri.parse('$baseUrl/auth/oauth/token'),
+      Uri.parse(ApiConfig.authToken),
       headers: {'Content-Type': 'application/json'},
       body: json.encode({
         'provider': providerId,
         'code': code,
         'redirect_uri': redirectUri,
       }),
-    ).timeout(const Duration(seconds: 30));
+    ).timeout(ApiConfig.timeout);
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body) as Map<String, dynamic>;
@@ -78,12 +75,12 @@ class AuthService {
   /// Get user info using access token
   Future<User> getUserInfo(String accessToken) async {
     final response = await http.get(
-      Uri.parse('$baseUrl/auth/user'),
+      Uri.parse(ApiConfig.authUser),
       headers: {
         'Authorization': 'Bearer $accessToken',
         'Content-Type': 'application/json',
       },
-    ).timeout(const Duration(seconds: 30));
+    ).timeout(ApiConfig.timeout);
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body) as Map<String, dynamic>;
@@ -101,10 +98,10 @@ class AuthService {
   /// Refresh access token
   Future<OAuthToken> refreshToken(String refreshToken) async {
     final response = await http.post(
-      Uri.parse('$baseUrl/auth/oauth/refresh'),
+      Uri.parse(ApiConfig.authRefresh),
       headers: {'Content-Type': 'application/json'},
       body: json.encode({'refresh_token': refreshToken}),
-    ).timeout(const Duration(seconds: 30));
+    ).timeout(ApiConfig.timeout);
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body) as Map<String, dynamic>;
@@ -123,9 +120,9 @@ class AuthService {
   /// Get available OAuth providers
   Future<List<OAuthProvider>> getAvailableProviders() async {
     final response = await http.get(
-      Uri.parse('$baseUrl/auth/oauth/providers'),
+      Uri.parse(ApiConfig.authProviders),
       headers: {'Content-Type': 'application/json'},
-    ).timeout(const Duration(seconds: 30));
+    ).timeout(ApiConfig.timeout);
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body) as List<dynamic>;
@@ -164,15 +161,14 @@ class AuthService {
     try {
       await http
           .post(
-            Uri.parse('$baseUrl/auth/logout'),
+            Uri.parse(ApiConfig.authLogout),
             headers: {
               'Content-Type': 'application/json',
             },
           )
-          .timeout(const Duration(seconds: 30));
+          .timeout(ApiConfig.timeout);
     } catch (e) {
       // Log but don't fail if logout fails
-      print('Logout error: $e');
     }
   }
 }

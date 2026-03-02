@@ -1,4 +1,65 @@
+"""
+=============================================================================
+QKD Key Manager Authentication (ETSI GS QKD 014)
+=============================================================================
+
+This module provides authentication for external QKD (Quantum Key Distribution)
+key management systems following the ETSI GS QKD 014 REST API standard.
+
+WHAT IS QKD KEY MANAGEMENT:
+---------------------------
+In production quantum networks, QKD hardware (single-photon sources, detectors)
+is managed by dedicated Key Management Entities (KMEs). These KMEs:
+- Control the physical QKD hardware
+- Distribute quantum keys to authorized applications
+- Track key usage and enforce policies
+
+This module handles authentication TO these KMEs, so our app can request
+quantum keys for message encryption.
+
+ETSI GS QKD 014:
+----------------
+ETSI (European Telecommunications Standards Institute) defines a standard
+REST API for QKD key management:
+- GET /api/v1/keys/{slave_SAE_ID}/status: Check key availability
+- GET /api/v1/keys/{slave_SAE_ID}/enc_keys: Request keys
+
+We implement the authentication layer for accessing these APIs.
+
+AUTHENTICATION METHODS:
+-----------------------
+1. Bearer Token / API Key
+   - Simple token-based auth
+   - Token stored in OS keychain
+
+2. Client Certificate (mTLS)
+   - Mutual TLS with client certificates
+   - Used for high-security deployments
+   - Certificates stored as files (paths configured)
+
+USAGE:
+------
+    from qmail.auth.qkd import QkdClient, QkdAuthConfig, QkdKeychainStore
+
+    # Store API key in keychain
+    store = QkdKeychainStore()
+    store.save_api_key("my-qkd-key", "secret-api-key-123")
+
+    # Configure client
+    config = QkdAuthConfig(
+        base_url="https://qkd.example.com/api/v1",
+        api_key_id="my-qkd-key",  # References keychain entry
+    )
+
+    client = QkdClient(config)
+
+    # Make authenticated requests
+    response = client.get("/keys/slave-001/status")
+    key_data = client.post("/keys/slave-001/enc_keys", {"number": 1, "size": 256})
+"""
+
 from __future__ import annotations
+
 
 from dataclasses import dataclass
 from typing import Optional, Dict, Any

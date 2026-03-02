@@ -1,0 +1,19 @@
+# =============================================================================
+# Qmail - Persistent Volume Claims
+# =============================================================================
+# PostgreSQL is the sole production database.
+# All user data, broker data, and keys are stored in PostgreSQL schemas.
+# =============================================================================
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: qmail-postgres-pvc
+  namespace: qmail
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: standard # Change based on your cloud provider (e.g., gp3 on AWS, pd-ssd on GKE)
+  resources:
+    requests:
+      storage: 20Gi

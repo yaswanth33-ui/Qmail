@@ -1,0 +1,47 @@
+# Qmail Backend Dependencies (pinned versions for reproducibility and security)
+# Update these carefully and test thoroughly after each dependency upgrade
+# Run: pip-audit regularly to check for known vulnerabilities
+
+# Core Framework
+fastapi==0.110.0
+uvicorn==0.27.0
+pydantic==2.5.0
+python-multipart==0.0.9  # Required for file uploads (UploadFile)
+
+# Cryptography & Security
+cryptography==41.0.7
+argon2-cffi==23.1.0  # CRITICAL: Required for Argon2-only KDF mode
+liboqs-python==0.14.1  # Post-quantum cryptography (ML-KEM-1024, Dilithium2) via Open Quantum Safe
+
+# Authentication
+requests==2.31.0
+keyring==24.3.0  # Secure credential storage in OS keychain
+bcrypt==4.1.2  # Password hashing for user accounts
+twilio==8.10.0  # SMS delivery for OTP codes
+
+# Database & ORM
+sqlalchemy==2.0.23
+psycopg2-binary==2.9.9  # PostgreSQL adapter (production database)
+python-dotenv==1.0.0
+
+# Optional: Distributed caching (for production token revocation)
+# Uncomment in production environments:
+# redis==5.0.1
+
+# Development & Testing
+pytest==7.4.3
+pytest-cov==4.1.0
+pyflakes==3.1.0  # Syntax checking
+
+# Production Deployment
+gunicorn==21.2.0  # WSGI server for production
+
+# Security Scanning (uncomment in CI/CD)
+# pip-audit==2.6.1  # Check for known vulnerabilities: pip-audit --skip-editable
+# bandit==1.7.5     # Static security analysis: bandit -r qmail/
+
+# Optional: Structured Logging (recommended for production)
+# python-json-logger==2.0.7
+
+# Optional: CORS handling
+fastapi-cors==0.0.6  # Already included in FastAPI, listed for clarity

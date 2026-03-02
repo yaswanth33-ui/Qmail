@@ -4,11 +4,18 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'router/app_router.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Load environment variables
+  await dotenv.load(fileName: ".env");
+  
+  // Using phone authentication only
+  
   runApp(const ProviderScope(child: QMailApp()));
 }
 
@@ -27,7 +34,7 @@ class QMailApp extends ConsumerWidget {
 
     if (_isCupertinoPlatform) {
       return CupertinoApp.router(
-        title: 'QMail',
+        title: 'QUMail',
         theme: const CupertinoThemeData(
           primaryColor: CupertinoColors.activeBlue,
           brightness: Brightness.light,
@@ -42,7 +49,7 @@ class QMailApp extends ConsumerWidget {
     );
 
     return MaterialApp.router(
-      title: 'QMail',
+      title: 'QUMail',
       debugShowCheckedModeBanner: false,
       themeMode: ThemeMode.system,
       theme: ThemeData(

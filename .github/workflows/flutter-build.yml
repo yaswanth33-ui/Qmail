@@ -43,6 +43,9 @@ jobs:
       - name: Enable Linux desktop
         run: flutter config --enable-linux-desktop
 
+      - name: Create Linux platform files
+        run: flutter create --platforms=linux .
+
       - name: Get dependencies
         run: flutter pub get
 
@@ -115,6 +118,9 @@ jobs:
         with:
           channel: master
 
+      - name: Create Windows platform files
+        run: flutter create --platforms=windows .
+
       - name: Get dependencies
         run: flutter pub get
 
@@ -122,7 +128,15 @@ jobs:
         run: flutter build windows --release
 
       - name: Archive Windows build
-        run: Compress-Archive -Path build\windows\x64\Release\* -DestinationPath qmail-windows-x64.zip
+        run: |
+          $releasePath = Get-ChildItem -Path build\windows -Recurse -Directory -Filter "Release" | Select-Object -First 1
+          if (-not $releasePath) {
+            $releasePath = Get-ChildItem -Path build\windows -Recurse -Directory -Filter "runner" | Select-Object -First 1
+            if ($releasePath) { $releasePath = $releasePath.Parent }
+          }
+          Write-Host "Release path: $($releasePath.FullName)"
+          Get-ChildItem -Path build\windows -Recurse -Directory | Select-Object FullName
+          Compress-Archive -Path "$($releasePath.FullName)\*" -DestinationPath qmail-windows-x64.zip
         shell: pwsh
 
       - name: Upload Windows artifact
@@ -146,6 +160,9 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: master
+
+      - name: Create Web platform files
+        run: flutter create --platforms=web .
 
       - name: Get dependencies
         run: flutter pub get
@@ -185,6 +202,9 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: master
+
+      - name: Create Android platform files
+        run: flutter create --platforms=android .
 
       - name: Get dependencies
         run: flutter pub get
