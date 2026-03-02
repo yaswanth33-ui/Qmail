@@ -46,6 +46,9 @@ jobs:
       - name: Create Linux platform files
         run: flutter create --platforms=linux .
 
+      - name: Create .env file
+        run: touch .env
+
       - name: Get dependencies
         run: flutter pub get
 
@@ -85,6 +88,9 @@ jobs:
       - name: Create macOS platform files
         run: flutter create --platforms=macos .
 
+      - name: Create .env file
+        run: touch .env
+
       - name: Get dependencies
         run: flutter pub get
 
@@ -120,6 +126,10 @@ jobs:
 
       - name: Create Windows platform files
         run: flutter create --platforms=windows .
+
+      - name: Create .env file
+        run: New-Item -Path .env -ItemType File -Force
+        shell: pwsh
 
       - name: Get dependencies
         run: flutter pub get
@@ -164,11 +174,14 @@ jobs:
       - name: Create Web platform files
         run: flutter create --platforms=web .
 
+      - name: Create .env file
+        run: touch .env
+
       - name: Get dependencies
         run: flutter pub get
 
       - name: Build Web release
-        run: flutter build web --release
+        run: flutter build web --release --no-wasm-dry-run
 
       - name: Archive Web build
         run: |
@@ -206,6 +219,9 @@ jobs:
       - name: Create Android platform files
         run: flutter create --platforms=android .
 
+      - name: Create .env file
+        run: touch .env
+
       - name: Get dependencies
         run: flutter pub get
 
@@ -237,11 +253,34 @@ jobs:
       - name: Create iOS platform files
         run: flutter create --platforms=ios .
 
+      - name: Create .env file
+        run: touch .env
+
       - name: Get dependencies
         run: flutter pub get
 
+      - name: Disable code signing
+        run: |
+          cd ios
+          sed -i '' 's/CODE_SIGNING_REQUIRED = YES/CODE_SIGNING_REQUIRED = NO/g' Runner.xcodeproj/project.pbxproj || true
+          sed -i '' 's/CODE_SIGN_IDENTITY = .*/CODE_SIGN_IDENTITY = ""/g' Runner.xcodeproj/project.pbxproj || true
+          cat > exportOptions.plist << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>compileBitcode</key>
+            <false/>
+            <key>method</key>
+            <string>development</string>
+            <key>signingStyle</key>
+            <string>automatic</string>
+          </dict>
+          </plist>
+          EOF
+
       - name: Build iOS (no codesign)
-        run: flutter build ios --release --no-codesign
+        run: flutter build ios --release --no-codesign --no-tree-shake-icons
 
       - name: Archive iOS build
         run: |
