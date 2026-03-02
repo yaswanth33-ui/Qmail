@@ -316,7 +316,7 @@ class QMailTheme {
       ),
 
       // Card theme
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: QMailColors.lightSurface,
         elevation: 0,
         shape: RoundedRectangleBorder(
@@ -333,7 +333,7 @@ class QMailTheme {
       ),
 
       // Dialog theme
-      dialogTheme: DialogTheme(
+      dialogTheme: DialogThemeData(
         backgroundColor: QMailColors.lightSurface,
         elevation: 8,
         shape: RoundedRectangleBorder(
@@ -466,7 +466,7 @@ class QMailTheme {
       ),
 
       // Tab bar theme
-      tabBarTheme: TabBarTheme(
+      tabBarTheme: TabBarThemeData(
         labelColor: QMailColors.primary,
         unselectedLabelColor: QMailColors.lightTextSecondary,
         indicatorColor: QMailColors.primary,
@@ -602,7 +602,7 @@ class QMailTheme {
       ),
 
       // Card theme
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: QMailColors.darkSurface,
         elevation: 0,
         shape: RoundedRectangleBorder(
@@ -619,7 +619,7 @@ class QMailTheme {
       ),
 
       // Dialog theme
-      dialogTheme: DialogTheme(
+      dialogTheme: DialogThemeData(
         backgroundColor: QMailColors.darkSurface,
         elevation: 8,
         shape: RoundedRectangleBorder(
@@ -752,7 +752,7 @@ class QMailTheme {
       ),
 
       // Tab bar theme
-      tabBarTheme: TabBarTheme(
+      tabBarTheme: TabBarThemeData(
         labelColor: QMailColors.primaryLight,
         unselectedLabelColor: QMailColors.darkTextSecondary,
         indicatorColor: QMailColors.primaryLight,
