@@ -48,6 +48,13 @@ services:
       # QRNG
       - key: QRNG_BASE_URL
         value: "https://qrng.anu.edu.au/API/jsonI.php"
+      # Twilio SMS - for OTP delivery
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_PHONE_NUMBER
+        sync: false
       # Redis - leave empty, app falls back to in-memory
       - key: REDIS_URL
         value: ""
