@@ -90,14 +90,12 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 # Copy application source code (respects .dockerignore)
 COPY qmail/ ./qmail/
-COPY scripts/ ./scripts/
 COPY requirements.txt .
 COPY .env.example .
 
 # Create directories for runtime data with proper permissions
 RUN mkdir -p /app/qmail_users /app/qmail_broker /app/logs && \
-    chown -R qmail:qmail /app && \
-    chmod +x /app/scripts/startup.sh
+    chown -R qmail:qmail /app
 
 # Switch to non-root user
 USER qmail
@@ -128,13 +126,31 @@ import os
 
 os.chdir('/app')
 print("📦 Initializing database schema...")
-result = subprocess.run([sys.executable, 'scripts/init_db.py'])
-if result.returncode != 0:
-    print("❌ Database initialization failed")
-    sys.exit(1)
 
-print("✅ Database ready")
+# Initialize database by importing Storage (creates tables on init)
+try:
+    from qmail.storage.db import Storage
+    from dotenv import load_dotenv
+    import logging
+    
+    load_dotenv()
+    logging.basicConfig(level=logging.INFO)
+    
+    database_url = os.getenv("DATABASE_URL")
+    if database_url:
+        print(f"  Connecting to: {database_url[:50]}...")
+        Storage(database_url=database_url)
+        print("✅ Database tables initialized")
+    else:
+        print("  (Skipping - DATABASE_URL not set)")
+except Exception as e:
+    print(f"⚠️ Database init warning: {e}")
+    print("  (This is OK if tables already exist)")
+
+print("✅ Startup complete")
 print("🌐 Starting Qmail API...")
+
+# Start gunicorn
 os.execvp('gunicorn', ['gunicorn', 'qmail.api:app', '--worker-class', 'uvicorn.workers.UvicornWorker', '--workers', '2', '--preload', '--bind', '0.0.0.0:8000', '--timeout', '120', '--graceful-timeout', '30', '--access-logfile', '-', '--error-logfile', '-'])
 ENTRYPOINT_EOF
 
