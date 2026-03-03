@@ -90,12 +90,14 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 # Copy application source code (respects .dockerignore)
 COPY qmail/ ./qmail/
+COPY scripts/ ./scripts/
 COPY requirements.txt .
 COPY .env.example .
 
 # Create directories for runtime data with proper permissions
 RUN mkdir -p /app/qmail_users /app/qmail_broker /app/logs && \
-    chown -R qmail:qmail /app
+    chown -R qmail:qmail /app && \
+    chmod +x /app/scripts/startup.sh
 
 # Switch to non-root user
 USER qmail
@@ -117,17 +119,5 @@ ENV ENV=production \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
 
-# Production: use gunicorn with uvicorn workers for performance & reliability
-# - --preload: load app once in master before forking (efficient resource sharing)
-# - 2 workers (optimized for Render free tier 512MB RAM)
-# - 120s timeout for long-running crypto operations
-# - Graceful shutdown with 30s grace period
-CMD ["gunicorn", "qmail.api:app", \
-     "--worker-class", "uvicorn.workers.UvicornWorker", \
-     "--workers", "2", \
-     "--preload", \
-     "--bind", "0.0.0.0:8000", \
-     "--timeout", "120", \
-     "--graceful-timeout", "30", \
-     "--access-logfile", "-", \
-     "--error-logfile", "-"]
+# Production: use startup script that initializes DB then starts gunicorn
+CMD ["/app/scripts/startup.sh"]
