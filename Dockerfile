@@ -119,12 +119,12 @@ ENV ENV=production \
 
 # Production: use gunicorn with uvicorn workers for performance & reliability
 # - --preload: load app once in master before forking (efficient resource sharing)
-# - 4 workers (adjust based on CPU cores: 2 * cores + 1)
+# - 2 workers (optimized for Render free tier 512MB RAM)
 # - 120s timeout for long-running crypto operations
 # - Graceful shutdown with 30s grace period
 CMD ["gunicorn", "qmail.api:app", \
      "--worker-class", "uvicorn.workers.UvicornWorker", \
-     "--workers", "4", \
+     "--workers", "2", \
      "--preload", \
      "--bind", "0.0.0.0:8000", \
      "--timeout", "120", \

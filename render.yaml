@@ -1,0 +1,58 @@
+# =============================================================================
+# Qmail - Render Blueprint (Infrastructure as Code)
+# =============================================================================
+# Deploy with: https://render.com/deploy → connect GitHub repo
+# This auto-creates: FastAPI backend + PostgreSQL database
+# =============================================================================
+
+databases:
+  # PostgreSQL - Primary production database
+  - name: qmail-db
+    plan: free
+    databaseName: qmail
+    user: qmail
+    region: oregon  # Free tier available in Oregon
+
+services:
+  # FastAPI Backend - Qmail API Server
+  - type: web
+    name: qmail-api
+    plan: free
+    region: oregon
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      # Database - auto-populated from the qmail-db above
+      - key: DATABASE_URL
+        fromDatabase:
+          name: qmail-db
+          property: connectionString
+      # Application settings
+      - key: ENV
+        value: production
+      - key: ENFORCE_HTTPS
+        value: "0"
+      - key: API_HOST
+        value: "0.0.0.0"
+      - key: API_PORT
+        value: "8000"
+      - key: LOG_LEVEL
+        value: INFO
+      - key: CORS_ALLOWED_ORIGINS
+        value: "*"
+      - key: SESSION_TIMEOUT_SECONDS
+        value: "3600"
+      - key: SENSITIVE_OPS_REAUTH_WINDOW
+        value: "300"
+      # QRNG
+      - key: QRNG_BASE_URL
+        value: "https://qrng.anu.edu.au/API/jsonI.php"
+      # Redis - leave empty, app falls back to in-memory
+      - key: REDIS_URL
+        value: ""
+      # Security keys - auto-generated on first deploy
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: DB_ENCRYPTION_MASTER_KEY
+        generateValue: true

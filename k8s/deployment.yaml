@@ -17,7 +17,7 @@ metadata:
     app: qmail-api
     tier: backend
 spec:
-  replicas: 3
+  replicas: 1  # Reduced from 3 for free-tier cost savings (scale up for production)
   selector:
     matchLabels:
       app: qmail-api
