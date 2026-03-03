@@ -714,16 +714,29 @@ async def forgot_password(
     """
     # Try to find user by identifier (email, username, or phone)
     user = None
+    identifier = req.identifier.strip()
     
     # Check if it's an email
-    if "@qmail.com" in req.identifier.lower():
-        user = storage.get_user_by_email(req.identifier)
+    if "@qmail.com" in identifier.lower():
+        user = storage.get_user_by_email(identifier)
     # Check if it's a phone number (starts with +)
-    elif req.identifier.startswith("+"):
-        user = storage.get_user_by_phone(req.identifier)
+    elif identifier.startswith("+"):
+        user = storage.get_user_by_phone(identifier)
+    # Check if it's a raw phone number (all digits, 7-15 chars)
+    elif identifier.replace("-", "").replace(" ", "").isdigit() and 7 <= len(identifier.replace("-", "").replace(" ", "")) <= 15:
+        digits = identifier.replace("-", "").replace(" ", "")
+        # Try common dial code prefixes to find the user
+        common_dial_codes = ["+", "+1", "+91", "+44", "+61", "+49", "+33", "+81", "+86", "+55", "+52"]
+        for prefix in common_dial_codes:
+            user = storage.get_user_by_phone(f"{prefix}{digits}")
+            if user:
+                break
+        # If not found, also try treating as username as fallback
+        if not user:
+            user = storage.get_user_by_username(identifier)
     # Otherwise treat as username
     else:
-        user = storage.get_user_by_username(req.identifier)
+        user = storage.get_user_by_username(identifier)
     
     if not user:
         raise HTTPException(

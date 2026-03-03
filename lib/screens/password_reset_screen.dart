@@ -97,8 +97,9 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
 
     try {
       final authService = QmailAuthService();
+      final identifier = _identifierController.text.trim();
       final response = await authService.requestPasswordReset(
-        _identifierController.text,
+        identifier,
       );
 
       if (mounted) {
