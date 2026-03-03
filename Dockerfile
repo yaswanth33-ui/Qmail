@@ -119,5 +119,24 @@ ENV ENV=production \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
 
-# Production: use startup script that initializes DB then starts gunicorn
-CMD ["/app/scripts/startup.sh"]
+# Create inline Python entrypoint script
+RUN cat > /app/entrypoint.py << 'ENTRYPOINT_EOF'
+#!/usr/bin/env python3
+import subprocess
+import sys
+import os
+
+os.chdir('/app')
+print("📦 Initializing database schema...")
+result = subprocess.run([sys.executable, 'scripts/init_db.py'])
+if result.returncode != 0:
+    print("❌ Database initialization failed")
+    sys.exit(1)
+
+print("✅ Database ready")
+print("🌐 Starting Qmail API...")
+os.execvp('gunicorn', ['gunicorn', 'qmail.api:app', '--worker-class', 'uvicorn.workers.UvicornWorker', '--workers', '2', '--preload', '--bind', '0.0.0.0:8000', '--timeout', '120', '--graceful-timeout', '30', '--access-logfile', '-', '--error-logfile', '-'])
+ENTRYPOINT_EOF
+
+# Production: initialize DB then start API
+CMD ["python", "/app/entrypoint.py"]

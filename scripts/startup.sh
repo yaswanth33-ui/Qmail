@@ -1,25 +1,20 @@
 #!/bin/bash
-# Production startup script - initialize DB then start API
+set -e
 
-set -e  # Exit on error
+cd /app
 
 echo "🚀 Qmail API Startup"
 echo "===================="
-
-# Initialize database schema
 echo "📦 Initializing database schema..."
-python /app/scripts/init_db.py
 
-if [ $? -ne 0 ]; then
+python scripts/init_db.py || {
     echo "❌ Database initialization failed"
     exit 1
-fi
+}
 
 echo "✅ Database ready"
-echo ""
-
-# Start API server
 echo "🌐 Starting Qmail API..."
+
 exec gunicorn qmail.api:app \
     --worker-class uvicorn.workers.UvicornWorker \
     --workers 2 \
