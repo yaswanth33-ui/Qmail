@@ -34,9 +34,13 @@ import random
 import secrets
 import json
 import hashlib
+import logging
 from datetime import datetime, timezone, timedelta
 from typing import Optional, Tuple
 import bcrypt
+
+# Setup logging
+logger = logging.getLogger(__name__)
 
 # For SMS delivery (Twilio)
 try:
@@ -191,7 +195,16 @@ class OtpService:
         message_body = f"Hi {name.split()[0]}, your Qmail OTP code is: {otp_code}. Valid for 10 minutes. Never share this code."
         
         if self.use_mock_sms:
-            # For development/testing: print instead of sending
+            # For development/testing: log the OTP to console and logs
+            logger.warning(f"🔓 MOCK SMS MODE - OTP for {phone}: {otp_code} | Message: {message_body}")
+            print(f"\n{'='*80}")
+            print(f"🔓 MOCK SMS MODE - OTP Code")
+            print(f"{'='*80}")
+            print(f"Phone:   {phone}")
+            print(f"Name:    {name}")
+            print(f"OTP:     {otp_code}")
+            print(f"Message: {message_body}")
+            print(f"{'='*80}\n")
             return
         
         if not self.twilio_client or not self.twilio_phone_number:
