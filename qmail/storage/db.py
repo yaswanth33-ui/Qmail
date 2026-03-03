@@ -420,7 +420,18 @@ class Storage:
                 @event.listens_for(engine, "connect")
                 def _set_search_path(dbapi_conn, connection_record):
                     cursor = dbapi_conn.cursor()
-                    cursor.execute(f'SET search_path TO "{safe_schema}", public')
+                    # CRITICAL: Do NOT include 'public' in search_path!
+                    # Including 'public' causes metadata.create_all(checkfirst=True)
+                    # to find tables in 'public' and skip creating them in the
+                    # user's schema, breaking per-user data isolation.
+                    cursor.execute(f'SET search_path TO "{safe_schema}"')
+                    cursor.close()
+
+                # Also set search_path on checkout (pooled connection reuse)
+                @event.listens_for(engine, "checkout")
+                def _set_search_path_checkout(dbapi_conn, connection_record, connection_proxy):
+                    cursor = dbapi_conn.cursor()
+                    cursor.execute(f'SET search_path TO "{safe_schema}"')
                     cursor.close()
 
         with _engine_lock:

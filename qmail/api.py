@@ -2198,17 +2198,28 @@ async def send_email(request: Request, email_request: SendEmailRequest) -> SentE
         # LEGACY: Server-side encryption (NOT E2E - server sees plaintext)
         
         app_config = AppConfig()
-        # Use user-specific database
-        user_db_dir = Path("qmail_users") / user_email.replace("@", "_at_")
-        user_db_dir.mkdir(parents=True, exist_ok=True)
-        db_path = user_db_dir / "storage.db"
-
+        database_url = os.environ.get("DATABASE_URL")
         enc_key = _get_db_encryption_key(f"user:{user_email}")
-        client = QmailClient(
-            app_config=app_config,
-            db_path=db_path,
-            encryption_key=enc_key,
-        )
+        
+        if database_url and not database_url.startswith("sqlite"):
+            # PostgreSQL: use schema-based user isolation (same as _get_user_storage)
+            user_schema = "user_" + user_email.replace("@", "_at_").replace(".", "_")
+            client = QmailClient(
+                app_config=app_config,
+                encryption_key=enc_key,
+                database_url=database_url,
+                schema=user_schema,
+            )
+        else:
+            # SQLite: per-user database file
+            user_db_dir = Path("qmail_users") / user_email.replace("@", "_at_")
+            user_db_dir.mkdir(parents=True, exist_ok=True)
+            db_path = user_db_dir / "storage.db"
+            client = QmailClient(
+                app_config=app_config,
+                db_path=db_path,
+                encryption_key=enc_key,
+            )
         
         # Send encrypted email with _server_context=True to get encrypted data directly
         result = await client.send_email(
