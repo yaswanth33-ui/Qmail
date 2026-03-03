@@ -9,8 +9,8 @@ class ApiConfig {
   /// Base URL for the Qmail API server.
   ///
   /// Development: http://localhost:5000
-  /// Production: https://api.qmail.example.com
-  static String get baseUrl => dotenv.env['API_BASE_URL'] ?? 'http://localhost:5000';
+  /// Production: https://qmail-api.onrender.com
+  static String get baseUrl => dotenv.env['API_BASE_URL'] ?? 'https://qmail-api.onrender.com';
 
   /// Connection timeout for API requests
   static const Duration timeout = Duration(seconds: 30);
