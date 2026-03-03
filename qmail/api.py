@@ -422,19 +422,25 @@ async def _auto_delete_acknowledged_messages() -> None:
             await asyncio.sleep(AUTO_DELETE_INTERVAL_SECONDS)
             broker_storage = _get_broker_storage()
             cutoff = datetime.now(timezone.utc) - timedelta(minutes=AUTO_DELETE_GRACE_PERIOD_MINUTES)
+            
+            # SAFEGUARD: Only delete if ALL conditions are met
+            # 1. Status must be "acknowledged" (not "pending")
+            # 2. acknowledged_at must be set and <= cutoff
+            # 3. This ensures we never delete unacknowledged messages
             stmt = pending_messages_table.delete().where(
                 (pending_messages_table.c.status == "acknowledged") &
+                (pending_messages_table.c.acknowledged_at.isnot(None)) &
                 (pending_messages_table.c.acknowledged_at <= cutoff)
             )
             with broker_storage._engine.begin() as conn:
                 result = conn.execute(stmt)
                 if result.rowcount > 0:
-                    pass  # Acknowledged messages deleted
+                    logger.info(f"Auto-deleted {result.rowcount} acknowledged messages from broker")
         except asyncio.CancelledError:
             break
         except Exception as exc:
             # Log but never crash the background task
-            pass
+            logger.error(f"Error in auto-delete task: {exc}")
 
 
 @asynccontextmanager
@@ -978,12 +984,13 @@ async def _sync_from_broker(user_email: str, storage: Storage, authorization: st
             
             # Skip if already synced
             if message_id in existing_ids:
-                # Acknowledge to remove from pending
+                # Acknowledge to remove from pending (already has local copy)
                 with broker_storage._engine.begin() as conn:
                     ack_stmt = pending_messages_table.update().where(
                         pending_messages_table.c.id == message_id
                     ).values(status="acknowledged", acknowledged_at=datetime.now(timezone.utc))
                     conn.execute(ack_stmt)
+                logger.debug(f"Message {message_id} already synced, marked acknowledged")
                 continue
             
             try:
@@ -3594,6 +3601,8 @@ async def acknowledge_message(request: Request, message_id: str) -> MessageStatu
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail=f"Message {message_id} not found"
                 )
+            
+            logger.info(f"Message {message_id} acknowledged by {user_email}")
         
         
         return MessageStatusResponse(
