@@ -448,10 +448,17 @@ class Storage:
             return stored  # Legacy plaintext — return as-is
         if not self._encryption_key:
             return stored  # No key available — return raw (shouldn't happen)
-        raw = base64.b64decode(stored[len(self._ENC_PREFIX):])
-        nonce, ct = raw[:12], raw[12:]
-        aesgcm = AESGCM(self._encryption_key)
-        return aesgcm.decrypt(nonce, ct, None).decode("utf-8")
+        try:
+            raw = base64.b64decode(stored[len(self._ENC_PREFIX):])
+            nonce, ct = raw[:12], raw[12:]
+            aesgcm = AESGCM(self._encryption_key)
+            return aesgcm.decrypt(nonce, ct, None).decode("utf-8")
+        except Exception as e:
+            # Decryption failed - likely wrong key or corrupted data
+            # Log and return placeholder instead of crashing
+            import logging
+            logging.warning(f"Failed to decrypt text field: {e}")
+            return "[Decryption failed - wrong encryption key or corrupted data]"
 
     def _encrypt_blob(self, data: Optional[bytes]) -> Optional[bytes]:
         """Encrypt a BLOB field. Returns nonce+ciphertext or original if no key."""
@@ -471,10 +478,16 @@ class Storage:
             return stored  # Legacy unencrypted blob
         if not self._encryption_key:
             return stored  # No key — return raw
-        nonce = stored[4:16]
-        ct = stored[16:]
-        aesgcm = AESGCM(self._encryption_key)
-        return aesgcm.decrypt(nonce, ct, None)
+        try:
+            nonce = stored[4:16]
+            ct = stored[16:]
+            aesgcm = AESGCM(self._encryption_key)
+            return aesgcm.decrypt(nonce, ct, None)
+        except Exception as e:
+            # Decryption failed - likely wrong key or corrupted data
+            import logging
+            logging.warning(f"Failed to decrypt blob field: {e}")
+            return None  # Return None for failed blob decryption
 
     def _safe_add_column(self, conn, table_name: str, column_name: str, col_type: str, default: str = None) -> None:
         """Safely add a column if it doesn't exist (works for both SQLite and PostgreSQL)."""
