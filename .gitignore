@@ -91,9 +91,10 @@ nginx/ssl/*.crt
 # Nginx logs
 nginx/
 
-# Test & scripts folders (with exceptions for deployment scripts)
+# Test & scripts folders  
 test/
 tests/
-scripts/
+scripts/*
+# But track deployment scripts
 !scripts/init_db.py
 !scripts/startup.sh

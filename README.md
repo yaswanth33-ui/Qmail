@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="assets/images/qmail_logo.png" alt="Qmail Logo" width="120"/>
+  <img src="assets/images/qumail_logo.png" alt="QuMail Logo" width="120"/>
 </p>
 
-<h1 align="center">Qmail — Quantum-Secure Email Platform</h1>
+<h1 align="center">QuMail — Quantum-Secure Email Platform</h1>
 
 <p align="center">
   <strong>End-to-end encrypted, quantum-resistant email for the post-quantum era.</strong>
